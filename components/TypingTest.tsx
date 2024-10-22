@@ -61,15 +61,39 @@ export default function TypingTest() {
   const repeatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const nextTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchNewSnippet = useCallback(async () => {
+  const [userName, setUserName] = useState("");
+  const [showNamePrompt, setShowNamePrompt] = useState(false);
+
+  const fetchNewSnippet = useCallback(async (lang: Language) => {
     try {
-      const snippetText = await getRandomSnippet(selectedLanguage);
+      const snippetText = await getRandomSnippet(lang);
       setSnippet(snippetText);
     } catch (error) {
       console.error("Error fetching new snippet:", error);
-      setSnippet(defaultSnippets[selectedLanguage]);
+      setSnippet(defaultSnippets[lang]);
     }
-  }, [selectedLanguage]);
+  }, []);
+
+  const resetTest = useCallback(() => {
+    setIsStarted(false);
+    setIsFinished(false);
+    setTyped("");
+    setCursorPosition(0);
+    setStartTime(null);
+    setEndTime(null);
+    setWpm(0);
+    setAccuracy(100);
+    setErrors(0);
+    setWordCount(0);
+    setWpmHistory([]);
+    setErrorHistory([0]);
+  }, []);
+
+  const handleLanguageChange = useCallback((newLanguage: Language) => {
+    setSelectedLanguage(newLanguage);
+    resetTest();
+    setSnippet(defaultSnippets[newLanguage]);
+  }, [resetTest]);
 
   useEffect(() => {
     setSnippet(defaultSnippets[selectedLanguage]);
@@ -144,18 +168,8 @@ export default function TypingTest() {
   }, [isStarted, isFinished, updateWPM]);
 
   const repeatTest = () => {
+    resetTest();
     setIsStarted(true);
-    setIsFinished(false);
-    setTyped("");
-    setCursorPosition(0);
-    setStartTime(null);
-    setEndTime(null);
-    setWpm(0);
-    setAccuracy(100);
-    setErrors(0);
-    setWordCount(0);
-    setWpmHistory([]);
-    setErrorHistory([0]);
   };
 
   const handleKeyPress = useCallback(
@@ -278,24 +292,16 @@ export default function TypingTest() {
     };
   }, []);
 
-  const startTest = async () => {
-    await fetchNewSnippet();
+  const startTest = () => {
+    fetchNewSnippet(selectedLanguage);
+    resetTest();
     setIsStarted(true);
-    setIsFinished(false);
-    setTyped("");
-    setCursorPosition(0);
-    setStartTime(null);
-    setEndTime(null);
-    setWpm(0);
-    setAccuracy(100);
-    setErrors(0);
-    setWordCount(0);
-    setWpmHistory([]);
-    setErrorHistory([0]);
   };
 
   const nextTest = () => {
-    startTest();
+    fetchNewSnippet(selectedLanguage);
+    resetTest();
+    setIsStarted(true);
   };
 
   useEffect(() => {
@@ -344,6 +350,15 @@ export default function TypingTest() {
       clearTimeout(nextTimeoutRef.current);
     }
     setShowNextMessage(false);
+  };
+
+  const handleGenerate = () => {
+    setShowNamePrompt(true);
+  };
+
+  const handleNameSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setShowNamePrompt(false);
   };
 
   const getThemeClasses = (themeName: string): ThemeClasses => {
@@ -403,7 +418,7 @@ export default function TypingTest() {
           correct: "text-nord-green",
           incorrect: "text-nord-red",
           button: "bg-nord-blue text-nord-background hover:bg-nord-cyan",
-          cursor: "bg-nord-cyan",
+          cursor:  "bg-nord-cyan",
         };
       case "gruvbox":
         return {
@@ -482,7 +497,7 @@ export default function TypingTest() {
       <div className="absolute top-4 right-4 z-10">
         <select
           value={selectedLanguage}
-          onChange={(e) => setSelectedLanguage(e.target.value as Language)}
+          onChange={(e) => handleLanguageChange(e.target.value as Language)}
           className={`${bg} ${text} border border-gray-300 rounded-md px-2 py-1`}
         >
           <option value="javascript">JavaScript</option>
@@ -565,6 +580,11 @@ export default function TypingTest() {
         </>
       ) : (
         <div className={`${bg} p-8 rounded-lg mb-8`}>
+          {userName && (
+            <h2 className={`${text} text-2xl font-bold mb-4 text-left`}>
+              {userName}'s Results
+            </h2>
+          )}
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div>
               <h2 className={`${text} text-2xl font-bold mb-2`}>WPM</h2>
@@ -640,10 +660,40 @@ export default function TypingTest() {
                   </div>
                 )}
               </div>
+              {isFinished && (
+                <button
+                  className={`${button} px-6 py-2 rounded-full text-lg font-medium transition-colors duration-200`}
+                  onClick={handleGenerate}
+                  tabIndex={-1}
+                >
+                  Generate
+                </button>
+              )}
             </>
           )}
         </div>
       </div>
+      {showNamePrompt && (
+        <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center`}>
+          <div className={`${bg} p-8 rounded-lg`}>
+            <form onSubmit={handleNameSubmit}>
+              <input
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                placeholder="Enter your name"
+                className={`${text} ${bg} border border-gray-300 rounded-md px-4 py-2 mb-4 w-full`}
+              />
+              <button
+                type="submit"
+                className={`${button} px-6 py-2 rounded-full text-lg font-medium transition-colors duration-200 w-full`}
+              >
+                Submit
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
