@@ -34,7 +34,7 @@ type ThemeClasses = {
   cursor: string;
 };
 
-type Language = "javascript" | "typescript" | "python";
+type Language = "javascript" | "typescript" | "python" | "rust";
 
 export default function TypingTest() {
   const { theme } = useTheme();
@@ -120,20 +120,23 @@ export default function TypingTest() {
   };
 
   const updateWPM = useCallback(() => {
-    if (startTime) {
-      const timeElapsed = (Date.now() - startTime) / 60000;
-      const finalWpm = Math.round(typed.length / 5 / timeElapsed);
-      setWpm(finalWpm);
-      setWpmHistory((prev) => [...prev, finalWpm]);
+    if (startTime && typed.length > 0) {
+      const timeElapsed = Math.max((Date.now() - startTime) / 60000, 1/60);
+      const wordsTyped = typed.trim().split(/\s+/).length;
+      const calculatedWPM = Math.round(wordsTyped / timeElapsed);
+      
+      setWpmHistory(prev => [...prev, calculatedWPM]);
+      setWpm(calculatedWPM);
     }
   }, [startTime, typed]);
+  
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isStarted && !isFinished) {
       interval = setInterval(() => {
         updateWPM();
-      }, 1000);
+      }, 500);
     }
     return () => {
       if (interval) clearInterval(interval);
@@ -485,6 +488,7 @@ export default function TypingTest() {
           <option value="javascript">JavaScript</option>
           <option value="typescript">TypeScript</option>
           <option value="python">Python</option>
+          <option value="rust">Rust</option>
         </select>
       </div>
       {!isFinished ? (

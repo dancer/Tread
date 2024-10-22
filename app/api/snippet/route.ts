@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server'
 import axios from 'axios'
 
-const snippetCache: { [key: string]: string[] } = {
+type SupportedLanguage = 'javascript' | 'typescript' | 'python' | 'rust';
+
+const snippetCache: { [key in SupportedLanguage]: string[] } = {
   javascript: [],
   typescript: [],
-  python: []
+  python: [],
+  rust: []
 };
 const MAX_CACHE_SIZE = 10
 
@@ -16,23 +19,32 @@ const codePrompts: string[] = [
   'Generate a small mathematical function'
 ]
 
-async function generateAndFormatCode(language: string = 'javascript'): Promise<string> {
+function splitLongLines(code: string, maxLength: number = 50): string {
+  return code.split('\n').map(line => {
+    if (line.length <= maxLength) return line;
+    return line.match(new RegExp(`.{1,${maxLength}}`, 'g'))?.join('\n  ') || line;
+  }).join('\n');
+}
+
+async function generateAndFormatCode(language: SupportedLanguage = 'javascript'): Promise<string> {
   const randomPrompt = codePrompts[Math.floor(Math.random() * codePrompts.length)]
   
   const response = await axios.post(
     'https://api.anthropic.com/v1/messages',
     {
-      model: 'claude-3-sonnet-20240229',
+      model: 'claude-3-5-sonnet-latest',
       max_tokens: 100,
       messages: [{
         role: 'user',
         content: `${randomPrompt} in ${language}. The code must follow these rules exactly:
-        1. Maximum 20 lines total including closing braces
-        2. Not exceed 50 characters per line
-        3. Simple and concise implementation
-        4. Only give raw code, no comments or explanations
-        5. Use language-specific syntax and best practices for ${language}
-        6. Format like this example (but in ${language}):
+        1. Minimum 10 lines total including closing braces
+        2. Maximum 20 lines total including closing braces
+        3. Not exceed 50 characters per line
+        4. Simple and concise implementation
+        5. Only give raw code, no comments or explanations
+        6. Leetcode medium and hard solutions
+        7. Use language-specific syntax and best practices for ${language}
+        8. Format like this example (but in ${language}):
         
         function reverseString(str) {
           return str
@@ -73,15 +85,52 @@ async function generateAndFormatCode(language: string = 'javascript'): Promise<s
     .join('\n')
     .trim();
 
+  code = splitLongLines(code);
+
   const lines = code.split('\n');
-  if (lines.length > 20) {
-    code = lines.slice(0, 20).join('\n');
+  const additionalLines: Record<SupportedLanguage, string[]> = {
+    javascript: [
+      'console.log("Debug output");',
+      'const result = someFunction();',
+      'if (condition) { doSomething(); }',
+      'for (let i = 0; i < array.length; i++) {}',
+      'setTimeout(() => {}, 1000);'
+    ],
+    typescript: [
+      'let variable: string = "value";',
+      'interface SomeInterface {}',
+      'class SomeClass implements SomeInterface {}',
+      'function genericFunction<T>(arg: T): T { return arg; }',
+      'type CustomType = string | number;'
+    ],
+    python: [
+      'print("Debug output")',
+      'result = some_function()',
+      'if condition:',
+      '    pass',
+      'for item in iterable:',
+      '    pass'
+    ],
+    rust: [
+      'let mut variable = String::new();',
+      'fn some_function() -> Result<(), Error> { Ok(()) }',
+      'if let Some(value) = optional_value { }',
+      'for item in iterator { }',
+      'match expression { _ => () }'
+    ]
+  };
+
+  while (lines.length < 10) {
+    const randomLine = additionalLines[language][Math.floor(Math.random() * additionalLines[language].length)];
+    lines.push(randomLine);
   }
+  
+  code = lines.join('\n');
 
   return code;
 }
 
-async function fillCache(language: string): Promise<void> {
+async function fillCache(language: SupportedLanguage): Promise<void> {
   try {
     while (snippetCache[language].length < MAX_CACHE_SIZE) {
       const code = await generateAndFormatCode(language)
@@ -97,23 +146,24 @@ async function fillCache(language: string): Promise<void> {
 fillCache('javascript')
 fillCache('typescript')
 fillCache('python')
+fillCache('rust')
 
 export async function POST(req: Request) {
   try {
     const { language = 'javascript' } = await req.json()
 
-    if (!snippetCache[language] || snippetCache[language].length < MAX_CACHE_SIZE / 2) {
-      fillCache(language)
+    if (!snippetCache[language as SupportedLanguage] || snippetCache[language as SupportedLanguage].length < MAX_CACHE_SIZE / 2) {
+      fillCache(language as SupportedLanguage)
     }
 
-    if (snippetCache[language] && snippetCache[language].length > 0) {
-      const randomIndex = Math.floor(Math.random() * snippetCache[language].length)
-      const snippet = snippetCache[language][randomIndex]
-      snippetCache[language] = snippetCache[language].filter((_, index) => index !== randomIndex)
+    if (snippetCache[language as SupportedLanguage] && snippetCache[language as SupportedLanguage].length > 0) {
+      const randomIndex = Math.floor(Math.random() * snippetCache[language as SupportedLanguage].length)
+      const snippet = snippetCache[language as SupportedLanguage][randomIndex]
+      snippetCache[language as SupportedLanguage] = snippetCache[language as SupportedLanguage].filter((_, index) => index !== randomIndex)
       return NextResponse.json({ content: [{ text: snippet }] })
     }
 
-    const code = await generateAndFormatCode(language)
+    const code = await generateAndFormatCode(language as SupportedLanguage)
     return NextResponse.json({ content: [{ text: code }] })
   } catch (error) {
     console.error('Error:', error)
