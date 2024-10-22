@@ -48,7 +48,7 @@ export default function TypingTest() {
   const [wpm, setWpm] = useState(0);
   const [accuracy, setAccuracy] = useState(100);
   const [errors, setErrors] = useState(0);
-  const [wordCount, setWordCount] = useState(0);
+  const [_wordCount, setWordCount] = useState(0);
   const [isStarted, setIsStarted] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [showRepeatMessage, setShowRepeatMessage] = useState(false);
