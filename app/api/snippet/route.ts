@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import axios from 'axios'
 
-let snippetCache: { [key: string]: string[] } = {
+const snippetCache: { [key: string]: string[] } = {
   javascript: [],
   typescript: [],
   python: []
