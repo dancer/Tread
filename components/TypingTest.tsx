@@ -604,9 +604,9 @@ export default function TypingTest() {
             </pre>
           </div>
           {isLoading && (
-            <div className="w-full h-2 bg-gray-200 rounded">
-              <div className="h-full bg-blue-500 rounded animate-pulse"></div>
-            </div>
+  <div className="w-full h-2 bg-opacity-20 rounded">
+    <div className={`h-full ${button} rounded animate-pulse`}></div>
+  </div>
           )}
           <div className={`flex justify-between mb-4 ${text} opacity-70`}>
             <span>Errors: {errors}</span>
