@@ -65,6 +65,8 @@ export default function TypingTest() {
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isFirstStart, setIsFirstStart] = useState(true);
+  const [showSnippet, setShowSnippet] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchNewSnippet = useCallback(async (lang: Language) => {
     try {
@@ -95,7 +97,7 @@ export default function TypingTest() {
     (newLanguage: Language) => {
       setSelectedLanguage(newLanguage);
       resetTest();
-      setSnippet(defaultSnippets[newLanguage]); 
+      setSnippet(defaultSnippets[newLanguage]);
     },
     [resetTest]
   );
@@ -297,16 +299,19 @@ export default function TypingTest() {
 
   const startTest = () => {
     if (isFirstStart) {
-      setCountdown(5);
-      
+      setCountdown(3);
+      const snippetPromise = fetchNewSnippet(selectedLanguage);
+
       const timer = setInterval(() => {
         setCountdown((prev) => {
           if (prev === 1) {
             clearInterval(timer);
-            fetchNewSnippet(selectedLanguage).then(() => {
+            setShowSnippet(false);
+            snippetPromise.then(() => {
               resetTest();
               setIsStarted(true);
               setIsFirstStart(false);
+              setShowSnippet(true);
             });
             return null;
           }
@@ -317,13 +322,16 @@ export default function TypingTest() {
       nextTest();
     }
   };
-  
-  
 
   const nextTest = () => {
-    fetchNewSnippet(selectedLanguage);
-    resetTest();
-    setIsStarted(true);
+    setIsLoading(true);
+    setShowSnippet(false);
+    fetchNewSnippet(selectedLanguage).then(() => {
+      resetTest();
+      setIsStarted(true);
+      setShowSnippet(true);
+      setIsLoading(false);
+    });
   };
 
   useEffect(() => {
@@ -535,7 +543,9 @@ export default function TypingTest() {
             <span className={`text-xl ml-2 ${text} opacity-70`}>WPM</span>
           </div>
           <div
-            className={`${bg} p-8 rounded-lg mb-8 relative overflow-hidden`}
+            className={`${bg} p-8 rounded-lg mb-8 relative overflow-hidden ${
+              !showSnippet ? "hidden" : ""
+            }`}
             tabIndex={0}
           >
             <pre
@@ -593,6 +603,11 @@ export default function TypingTest() {
               })}
             </pre>
           </div>
+          {isLoading && (
+            <div className="w-full h-2 bg-gray-200 rounded">
+              <div className="h-full bg-blue-500 rounded animate-pulse"></div>
+            </div>
+          )}
           <div className={`flex justify-between mb-4 ${text} opacity-70`}>
             <span>Errors: {errors}</span>
             <span>
@@ -717,15 +732,14 @@ export default function TypingTest() {
             </form>
           </div>
         </div>
-
       )}
-                  {countdown !== null && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                <div className={`${text} text-9xl font-bold animate-pulse`}>
-                  {countdown}
-                </div>
-              </div>
-            )}
+      {countdown !== null && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className={`${text} text-9xl font-bold animate-pulse`}>
+            {countdown}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
