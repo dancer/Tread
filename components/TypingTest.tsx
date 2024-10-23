@@ -64,6 +64,7 @@ export default function TypingTest() {
   const [userName, setUserName] = useState("");
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [isFirstStart, setIsFirstStart] = useState(true);
 
   const fetchNewSnippet = useCallback(async (lang: Language) => {
     try {
@@ -94,11 +95,10 @@ export default function TypingTest() {
     (newLanguage: Language) => {
       setSelectedLanguage(newLanguage);
       resetTest();
-      setSnippet(defaultSnippets[newLanguage]);
+      setSnippet(defaultSnippets[newLanguage]); 
     },
     [resetTest]
   );
-
   useEffect(() => {
     setSnippet(defaultSnippets[selectedLanguage]);
   }, [selectedLanguage]);
@@ -296,21 +296,29 @@ export default function TypingTest() {
   }, []);
 
   const startTest = () => {
-    setCountdown(3);
-    fetchNewSnippet(selectedLanguage);
-    
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev === 1) {
-          clearInterval(timer);
-          resetTest();
-          setIsStarted(true);
-          return null;
-        }
-        return prev ? prev - 1 : null;
-      });
-    }, 1000);
+    if (isFirstStart) {
+      setCountdown(3);
+      
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev === 1) {
+            clearInterval(timer);
+            fetchNewSnippet(selectedLanguage).then(() => {
+              resetTest();
+              setIsStarted(true);
+              setIsFirstStart(false);
+            });
+            return null;
+          }
+          return prev ? prev - 1 : null;
+        });
+      }, 1000);
+    } else {
+      nextTest();
+    }
   };
+  
+  
 
   const nextTest = () => {
     fetchNewSnippet(selectedLanguage);
