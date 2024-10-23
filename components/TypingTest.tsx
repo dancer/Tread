@@ -297,7 +297,7 @@ export default function TypingTest() {
 
   const startTest = () => {
     if (isFirstStart) {
-      setCountdown(3);
+      setCountdown(5);
       
       const timer = setInterval(() => {
         setCountdown((prev) => {
