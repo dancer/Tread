@@ -63,6 +63,7 @@ export default function TypingTest() {
 
   const [userName, setUserName] = useState("");
   const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   const fetchNewSnippet = useCallback(async (lang: Language) => {
     try {
@@ -89,11 +90,14 @@ export default function TypingTest() {
     setErrorHistory([0]);
   }, []);
 
-  const handleLanguageChange = useCallback((newLanguage: Language) => {
-    setSelectedLanguage(newLanguage);
-    resetTest();
-    setSnippet(defaultSnippets[newLanguage]);
-  }, [resetTest]);
+  const handleLanguageChange = useCallback(
+    (newLanguage: Language) => {
+      setSelectedLanguage(newLanguage);
+      resetTest();
+      setSnippet(defaultSnippets[newLanguage]);
+    },
+    [resetTest]
+  );
 
   useEffect(() => {
     setSnippet(defaultSnippets[selectedLanguage]);
@@ -145,15 +149,14 @@ export default function TypingTest() {
 
   const updateWPM = useCallback(() => {
     if (startTime && typed.length > 0) {
-      const timeElapsed = Math.max((Date.now() - startTime) / 60000, 1/60);
+      const timeElapsed = Math.max((Date.now() - startTime) / 60000, 1 / 60);
       const wordsTyped = typed.trim().split(/\s+/).length;
       const calculatedWPM = Math.round(wordsTyped / timeElapsed);
-      
-      setWpmHistory(prev => [...prev, calculatedWPM]);
+
+      setWpmHistory((prev) => [...prev, calculatedWPM]);
       setWpm(calculatedWPM);
     }
   }, [startTime, typed]);
-  
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -293,9 +296,19 @@ export default function TypingTest() {
   }, []);
 
   const startTest = () => {
-    fetchNewSnippet(selectedLanguage);
-    resetTest();
-    setIsStarted(true);
+    setCountdown(3);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === 1) {
+          clearInterval(timer);
+          fetchNewSnippet(selectedLanguage);
+          resetTest();
+          setIsStarted(true);
+          return null;
+        }
+        return prev ? prev - 1 : null;
+      });
+    }, 1000);
   };
 
   const nextTest = () => {
@@ -418,7 +431,7 @@ export default function TypingTest() {
           correct: "text-nord-green",
           incorrect: "text-nord-red",
           button: "bg-nord-blue text-nord-background hover:bg-nord-cyan",
-          cursor:  "bg-nord-cyan",
+          cursor: "bg-nord-cyan",
         };
       case "gruvbox":
         return {
@@ -674,7 +687,9 @@ export default function TypingTest() {
         </div>
       </div>
       {showNamePrompt && (
-        <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center`}>
+        <div
+          className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center`}
+        >
           <div className={`${bg} p-8 rounded-lg`}>
             <form onSubmit={handleNameSubmit}>
               <input
@@ -693,7 +708,15 @@ export default function TypingTest() {
             </form>
           </div>
         </div>
+
       )}
+                  {countdown !== null && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div className={`${text} text-9xl font-bold animate-pulse`}>
+                  {countdown}
+                </div>
+              </div>
+            )}
     </div>
   );
 }

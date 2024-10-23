@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
     "axios": "^1.7.7",
     "chart.js": "^4.4.5",
     "lucide-react": "^0.453.0",

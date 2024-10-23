@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
-import axios from 'axios'
+import Anthropic from '@anthropic-ai/sdk'
 
 type SupportedLanguage = 'javascript' | 'typescript' | 'python' | 'rust';
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 const snippetCache: { [key in SupportedLanguage]: string[] } = {
   javascript: [],
@@ -29,22 +33,25 @@ function splitLongLines(code: string, maxLength: number = 50): string {
 async function generateAndFormatCode(language: SupportedLanguage = 'javascript'): Promise<string> {
   const randomPrompt = codePrompts[Math.floor(Math.random() * codePrompts.length)]
   
-  const response = await axios.post(
-    'https://api.anthropic.com/v1/messages',
-    {
-      model: 'claude-3-5-sonnet-latest',
-      max_tokens: 100,
-      messages: [{
-        role: 'user',
-        content: `${randomPrompt} in ${language}. The code must follow these rules exactly:
+  const message = await anthropic.messages.create({
+    model: 'claude-3-5-sonnet-20241022',
+    max_tokens: 150,
+    messages: [{
+      role: 'user',
+      content: `You are an extremely technical backend systems engineer working for Google. You are interviewing a potential candidate for hire.
+        You are offering a leetcode ${randomPrompt} challenge as part of the interview.
+        Come up with a code function that is a solution for the challenge you are offering.
+        The code must follow these rules exactly:
         1. Minimum 10 lines total including closing braces
         2. Maximum 20 lines total including closing braces
         3. Not exceed 50 characters per line
         4. Simple and concise implementation
         5. Only give raw code, no comments or explanations
-        6. Leetcode medium and hard solutions
+        6. Only generate code from solutions of leetcode medium and hard problems
         7. Use language-specific syntax and best practices for ${language}
-        8. Format like this example (but in ${language}):
+        8. Follow all Open Source best practices for this piece of code
+        9. Give me a complete working function that compiles in ${language} on macOS
+        9. Format like this example (but in ${language}):
         
         function reverseString(str) {
           return str
@@ -52,18 +59,11 @@ async function generateAndFormatCode(language: SupportedLanguage = 'javascript')
             .reverse()
             .join('');
         }`
-      }]
-    },
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      }
-    }
-  )
+    }]
+  })
 
-  let code = response.data.content[0].text
+  const content = message.content[0].type === 'text' ? message.content[0].text : ''
+  let code = content
     .replace(/```javascript\n?/g, '')
     .replace(/```\n?/g, '')
     .replace(/^\/\/.*$/gm, '')
@@ -86,47 +86,6 @@ async function generateAndFormatCode(language: SupportedLanguage = 'javascript')
     .trim();
 
   code = splitLongLines(code);
-
-  const lines = code.split('\n');
-  const additionalLines: Record<SupportedLanguage, string[]> = {
-    javascript: [
-      'console.log("Debug output");',
-      'const result = someFunction();',
-      'if (condition) { doSomething(); }',
-      'for (let i = 0; i < array.length; i++) {}',
-      'setTimeout(() => {}, 1000);'
-    ],
-    typescript: [
-      'let variable: string = "value";',
-      'interface SomeInterface {}',
-      'class SomeClass implements SomeInterface {}',
-      'function genericFunction<T>(arg: T): T { return arg; }',
-      'type CustomType = string | number;'
-    ],
-    python: [
-      'print("Debug output")',
-      'result = some_function()',
-      'if condition:',
-      '    pass',
-      'for item in iterable:',
-      '    pass'
-    ],
-    rust: [
-      'let mut variable = String::new();',
-      'fn some_function() -> Result<(), Error> { Ok(()) }',
-      'if let Some(value) = optional_value { }',
-      'for item in iterator { }',
-      'match expression { _ => () }'
-    ]
-  };
-
-  while (lines.length < 10) {
-    const randomLine = additionalLines[language][Math.floor(Math.random() * additionalLines[language].length)];
-    lines.push(randomLine);
-  }
-  
-  code = lines.join('\n');
-
   return code;
 }
 
