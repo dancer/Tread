@@ -1,82 +1,36 @@
-# Tread - The Ultimate Coding Typing Test
-
-## About Tread
-
-Tread is a sophisticated typing test application designed specifically for programmers. It challenges users to improve their coding speed and accuracy across multiple programming languages, all while providing a visually pleasing Catppuccin-inspired interface.
-
-## Features
-
-- Multiple language support: JavaScript, TypeScript, and Python
-- Catppuccin theme for a soothing coding environment
-- Real-time WPM and accuracy tracking
-- Performance charts to visualize your progress
-- Instant feedback on typing errors
-- Easy test repetition and new snippet generation
-
-## Tech Stack
-
-- Next.js 13 with App Router
-- React 18
-- TypeScript
-- Tailwind CSS
-- Chart.js for data visualization
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/yourusername/tread.git
-   ```
+First, run the development server:
 
-2. Install dependencies:
-   ```
-   cd tread
-   npm install
-   ```
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-3. Run the development server:
-   ```
-   npm run dev
-   ```
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser to start typing!
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Catppuccin Theme
+## Learn More
 
-Tread embraces the Catppuccin color palette, offering a visually comfortable and aesthetically pleasing typing experience. The theme features:
+To learn more about Next.js, take a look at the following resources:
 
-- Soft, pastel colors that reduce eye strain
-- High contrast between text and background for improved readability
-- Carefully selected accent colors for UI elements and syntax highlighting
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-## Contributing
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-We welcome contributions to Tread! If you're interested in working on this project, please follow these steps:
+## Deploy on Vercel
 
-1. Fork the repository
-2. Create a new branch for your feature or bug fix
-3. Make your changes and commit them with clear, descriptive messages
-4. Push your changes to your fork
-5. Create a pull request to the main repository
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-**Important**: Before submitting your pull request, please send any updates or proposed changes to the project owner ([dxd](https://x.com/dxd)) for review and approval. This helps ensure that your contributions align with the project's goals and maintain consistency.
-
-For more detailed information on contributing, please see our [CONTRIBUTING.md](CONTRIBUTING.md) file.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-
-## Acknowledgements
-
-- Vercel for hosting and deployment
-- Anthropic for AI-powered code snippet generation
-- The Catppuccin team for color scheme inspiration
-- All our amazing contributors and users
-
----
-
-Created with precision by [dxd](https://x.com/dxd)
-
-[Back to top](#tread---the-ultimate-coding-typing-test)
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

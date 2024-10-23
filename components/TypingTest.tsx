@@ -297,11 +297,12 @@ export default function TypingTest() {
 
   const startTest = () => {
     setCountdown(3);
+    fetchNewSnippet(selectedLanguage);
+    
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev === 1) {
           clearInterval(timer);
-          fetchNewSnippet(selectedLanguage);
           resetTest();
           setIsStarted(true);
           return null;
