@@ -180,12 +180,12 @@ export default function TypingTest() {
 
   const generateShareImage = async () => {
     const statsDiv = document.createElement('div');
-    statsDiv.className = `${bg} p-8 rounded-lg w-[800px]`;
+    statsDiv.className = `${bg} p-8 rounded-lg w-[1000px] h-[800px]`;
     
     statsDiv.innerHTML = `
+    <div class="flex flex-col h-full">
       <div class="flex items-center justify-between mb-6">
         <h2 class="${text} text-4xl font-bold">${userName}'s Results</h2>
-        <img src="/warp.png" alt="Warp Logo" class="h-16" />
       </div>
       <div class="grid grid-cols-2 gap-8 mb-8">
         <div>
@@ -205,15 +205,23 @@ export default function TypingTest() {
           <p class="${text} text-5xl font-bold">${snippet.length}</p>
         </div>
       </div>
-      <div id="chart-container" class="h-64"></div>
-    `;
-  
+      <div id="chart-container" class="h-64 mb-8"></div>
+<div class="flex justify-end items-center gap-4 mt-auto">
+  <span class="${text} text-2xl font-medium">Tread</span>
+  <span class="${text} text-2xl">/</span>
+  <img src="/warp.png" alt="JoinWarp Logo" class="h-10 -mb-[9px]" />
+</div>
+
+
+    </div>
+  `;
   
     document.body.appendChild(statsDiv);
     
-    // Create a new chart instance for the share image
     const chartContainer = document.createElement('canvas');
     const ctx = chartContainer.getContext('2d');
+    chartContainer.style.width = '900px';
+    chartContainer.style.height = '500px';  
     
     if (ctx) {
       new ChartJS(ctx, {
@@ -227,10 +235,9 @@ export default function TypingTest() {
         }
       });
     }
-    
+
     statsDiv.querySelector('#chart-container')?.appendChild(chartContainer);
   
-    // Wait for next frame to ensure chart is rendered
     await new Promise(resolve => requestAnimationFrame(resolve));
     
     try {
@@ -241,7 +248,7 @@ export default function TypingTest() {
         useCORS: true
       });
       
-      // Create themed modal
+      //   
       const modalDiv = document.createElement('div');
       modalDiv.className = `fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50`;
       
@@ -277,8 +284,7 @@ export default function TypingTest() {
     }
     
     document.body.removeChild(statsDiv);
-  };
-  
+  };  
 
   const handleKeyPress = useCallback(
     (e: KeyboardEvent) => {
