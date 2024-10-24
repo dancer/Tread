@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme } from "./ThemeProvider";
 import { getRandomSnippet, defaultSnippets } from "../utils/codeSnippets";
 import { Line } from "react-chartjs-2";
+import html2canvas from 'html2canvas';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -176,6 +177,108 @@ export default function TypingTest() {
     resetTest();
     setIsStarted(true);
   };
+
+  const generateShareImage = async () => {
+    const statsDiv = document.createElement('div');
+    statsDiv.className = `${bg} p-8 rounded-lg w-[800px]`;
+    
+    statsDiv.innerHTML = `
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="${text} text-4xl font-bold">${userName}'s Results</h2>
+        <img src="/warp.png" alt="Warp Logo" class="h-16" />
+      </div>
+      <div class="grid grid-cols-2 gap-8 mb-8">
+        <div>
+          <h2 class="${text} text-2xl font-bold mb-2">WPM</h2>
+          <p class="${text} text-5xl font-bold">${wpm}</p>
+        </div>
+        <div>
+          <h2 class="${text} text-2xl font-bold mb-2">Accuracy</h2>
+          <p class="${text} text-5xl font-bold">${accuracy}%</p>
+        </div>
+        <div>
+          <h2 class="${text} text-2xl font-bold mb-2">Time</h2>
+          <p class="${text} text-5xl font-bold">${((endTime || 0) - (startTime || 0)) / 1000}s</p>
+        </div>
+        <div>
+          <h2 class="${text} text-2xl font-bold mb-2">Characters</h2>
+          <p class="${text} text-5xl font-bold">${snippet.length}</p>
+        </div>
+      </div>
+      <div id="chart-container" class="h-64"></div>
+    `;
+  
+  
+    document.body.appendChild(statsDiv);
+    
+    // Create a new chart instance for the share image
+    const chartContainer = document.createElement('canvas');
+    const ctx = chartContainer.getContext('2d');
+    
+    if (ctx) {
+      new ChartJS(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+          ...chartOptions,
+          animation: false,
+          responsive: false,
+          maintainAspectRatio: false
+        }
+      });
+    }
+    
+    statsDiv.querySelector('#chart-container')?.appendChild(chartContainer);
+  
+    // Wait for next frame to ensure chart is rendered
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    
+    try {
+      const canvas = await html2canvas(statsDiv, {
+        backgroundColor: null,
+        scale: 2,
+        logging: true,
+        useCORS: true
+      });
+      
+      // Create themed modal
+      const modalDiv = document.createElement('div');
+      modalDiv.className = `fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50`;
+      
+      modalDiv.innerHTML = `
+        <div class="${bg} p-8 rounded-lg max-w-md w-full mx-4">
+          <h3 class="${text} text-2xl font-bold mb-4">Save Results</h3>
+          <p class="${text} mb-6">Would you like to save your typing test results as an image?</p>
+          <div class="flex justify-end space-x-4">
+            <button id="cancel-save" class="${bg} ${text} px-6 py-2 rounded-full border border-gray-300 hover:bg-opacity-90">Cancel</button>
+            <button id="confirm-save" class="${button} px-6 py-2 rounded-full">Save Image</button>
+          </div>
+        </div>
+      `;
+  
+      document.body.appendChild(modalDiv);
+  
+      const saveImage = () => {
+        const image = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `${userName}-typing-stats.png`;
+        link.href = image;
+        link.click();
+        document.body.removeChild(modalDiv);
+      };
+  
+      modalDiv.querySelector('#confirm-save')?.addEventListener('click', saveImage);
+      modalDiv.querySelector('#cancel-save')?.addEventListener('click', () => {
+        document.body.removeChild(modalDiv);
+      });
+  
+    } catch (error) {
+      console.error('Error generating image:', error);
+    }
+    
+    document.body.removeChild(statsDiv);
+  };
+  
 
   const handleKeyPress = useCallback(
     (e: KeyboardEvent) => {
@@ -386,9 +489,10 @@ export default function TypingTest() {
     setShowNamePrompt(true);
   };
 
-  const handleNameSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleNameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setShowNamePrompt(false);
+    await generateShareImage();
   };
 
   const getThemeClasses = (themeName: string): ThemeClasses => {
@@ -703,7 +807,7 @@ export default function TypingTest() {
                   onClick={handleGenerate}
                   tabIndex={-1}
                 >
-                  Generate
+                  Share
                 </button>
               )}
             </>
