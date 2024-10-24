@@ -180,39 +180,37 @@ export default function TypingTest() {
 
   const generateShareImage = async () => {
     const statsDiv = document.createElement('div');
-    statsDiv.className = `${bg} p-8 rounded-lg w-[1000px] h-[800px]`;
-    
+    statsDiv.className = `${bg} p-8 rounded-lg`;
+    statsDiv.style.width = '800px';
+    statsDiv.style.height = '450px';
+
     statsDiv.innerHTML = `
     <div class="flex flex-col h-full">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="${text} text-4xl font-bold">${userName}'s Results</h2>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="${text} text-3xl font-bold">${userName}'s Results</h2>
       </div>
-      <div class="grid grid-cols-2 gap-8 mb-8">
+      <div class="grid grid-cols-2 gap-6 mb-6">
         <div>
-          <h2 class="${text} text-2xl font-bold mb-2">WPM</h2>
-          <p class="${text} text-5xl font-bold">${wpm}</p>
+          <h2 class="${text} text-lg font-bold mb-1">WPM</h2>
+          <p class="${text} text-4xl font-bold">${wpm}</p>
         </div>
         <div>
-          <h2 class="${text} text-2xl font-bold mb-2">Accuracy</h2>
-          <p class="${text} text-5xl font-bold">${accuracy}%</p>
+          <h2 class="${text} text-lg font-bold mb-1">Accuracy</h2>
+          <p class="${text} text-4xl font-bold">${accuracy}%</p>
         </div>
         <div>
-          <h2 class="${text} text-2xl font-bold mb-2">Time</h2>
-          <p class="${text} text-5xl font-bold">${((endTime || 0) - (startTime || 0)) / 1000}s</p>
+          <h2 class="${text} text-lg font-bold mb-1">Time</h2>
+          <p class="${text} text-4xl font-bold">${((endTime || 0) - (startTime || 0)) / 1000}s</p>
         </div>
         <div>
-          <h2 class="${text} text-2xl font-bold mb-2">Characters</h2>
-          <p class="${text} text-5xl font-bold">${snippet.length}</p>
+          <h2 class="${text} text-lg font-bold mb-1">Characters</h2>
+          <p class="${text} text-4xl font-bold">${snippet.length}</p>
         </div>
       </div>
-      <div id="chart-container" class="h-64 mb-8"></div>
-<div class="flex justify-end items-center gap-4 mt-auto">
-  <span class="${text} text-2xl font-medium">Tread</span>
-  <span class="${text} text-2xl">/</span>
-  <img src="/warp.png" alt="JoinWarp Logo" class="h-10 -mb-[9px]" />
-</div>
-
-
+      <div id="chart-container" class="h-48 mb-6"></div>
+      <div class="flex justify-end items-center gap-4 mt-auto">
+        <img src="/warp-logo-dark.png" alt="JoinWarp Logo" class="h-8 -mb-[5px]" />
+      </div>
     </div>
   `;
   
@@ -220,21 +218,47 @@ export default function TypingTest() {
     
     const chartContainer = document.createElement('canvas');
     const ctx = chartContainer.getContext('2d');
-    chartContainer.style.width = '900px';
-    chartContainer.style.height = '500px';  
     
-    if (ctx) {
-      new ChartJS(ctx, {
-        type: 'line',
-        data: chartData,
-        options: {
-          ...chartOptions,
-          animation: false,
-          responsive: false,
-          maintainAspectRatio: false
+if (ctx) {
+  new ChartJS(ctx, {
+    type: 'line',
+    data: chartData,
+    options: {
+      ...chartOptions,
+      animation: false,
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            padding: 5,
+            font: {
+              size: 8
+            }
+          }
+        },
+        x: {
+          ticks: {
+            padding: 10,
+            font: {
+              size: 4
+            }
+          }
         }
-      });
+      },
+      elements: {
+        line: {
+          tension: 0.1
+        },
+        point: {
+          radius: 3
+        }
+      }
     }
+  });
+}
+
 
     statsDiv.querySelector('#chart-container')?.appendChild(chartContainer);
   
