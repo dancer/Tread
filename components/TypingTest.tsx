@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme } from "./ThemeProvider";
 import { getRandomSnippet, defaultSnippets } from "../utils/codeSnippets";
 import { Line } from "react-chartjs-2";
-import html2canvas from 'html2canvas';
+import html2canvas from "html2canvas";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -68,6 +68,14 @@ export default function TypingTest() {
   const [isFirstStart, setIsFirstStart] = useState(true);
   const [showSnippet, setShowSnippet] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+
+  const calculateRawWPM = () => {
+    if (!startTime || !endTime) return 0;
+    const timeInMinutes = (endTime - startTime) / 60000;
+    const totalCharacters = typed.length;
+    const rawWPM = Math.round(totalCharacters / 5 / timeInMinutes);
+    return rawWPM;
+  };
 
   const fetchNewSnippet = useCallback(async (lang: Language) => {
     try {
@@ -178,137 +186,103 @@ export default function TypingTest() {
     setIsStarted(true);
   };
 
-  const generateShareImage = async () => {
-    const statsDiv = document.createElement('div');
+  const handleNameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setShowNamePrompt(false);
+
+    const statsDiv = document.createElement("div");
     statsDiv.className = `${bg} p-8 rounded-lg`;
-    statsDiv.style.width = '800px';
-    statsDiv.style.height = '450px';
+    statsDiv.style.width = "800px";
+    statsDiv.style.height = "450px";
 
     statsDiv.innerHTML = `
-    <div class="flex flex-col h-full">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="${text} text-3xl font-bold">${userName}'s Results</h2>
-      </div>
-      <div class="grid grid-cols-2 gap-6 mb-6">
-        <div>
-          <h2 class="${text} text-lg font-bold mb-1">WPM</h2>
-          <p class="${text} text-4xl font-bold">${wpm}</p>
+      <div class="flex flex-col h-full">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="${text} text-3xl font-bold">${userName}'s Results</h2>
         </div>
-        <div>
-          <h2 class="${text} text-lg font-bold mb-1">Accuracy</h2>
-          <p class="${text} text-4xl font-bold">${accuracy}%</p>
-        </div>
-        <div>
-          <h2 class="${text} text-lg font-bold mb-1">Time</h2>
-          <p class="${text} text-4xl font-bold">${((endTime || 0) - (startTime || 0)) / 1000}s</p>
-        </div>
-        <div>
-          <h2 class="${text} text-lg font-bold mb-1">Characters</h2>
-          <p class="${text} text-4xl font-bold">${snippet.length}</p>
-        </div>
-      </div>
-      <div id="chart-container" class="h-48 mb-6"></div>
-      <div class="flex justify-end items-center gap-4 mt-auto">
-        <img src="/warp-logo-dark.png" alt="JoinWarp Logo" class="h-8 -mb-[5px]" />
-      </div>
-    </div>
-  `;
-  
-    document.body.appendChild(statsDiv);
-    
-    const chartContainer = document.createElement('canvas');
-    const ctx = chartContainer.getContext('2d');
-    
-if (ctx) {
-  new ChartJS(ctx, {
-    type: 'line',
-    data: chartData,
-    options: {
-      ...chartOptions,
-      animation: false,
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            padding: 5,
-            font: {
-              size: 8
-            }
-          }
-        },
-        x: {
-          ticks: {
-            padding: 10,
-            font: {
-              size: 4
-            }
-          }
-        }
-      },
-      elements: {
-        line: {
-          tension: 0.1
-        },
-        point: {
-          radius: 3
-        }
-      }
-    }
-  });
-}
-
-
-    statsDiv.querySelector('#chart-container')?.appendChild(chartContainer);
-  
-    await new Promise(resolve => requestAnimationFrame(resolve));
-    
-    try {
-      const canvas = await html2canvas(statsDiv, {
-        backgroundColor: null,
-        scale: 2,
-        logging: true,
-        useCORS: true
-      });
-      
-      //   
-      const modalDiv = document.createElement('div');
-      modalDiv.className = `fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50`;
-      
-      modalDiv.innerHTML = `
-        <div class="${bg} p-8 rounded-lg max-w-md w-full mx-4">
-          <h3 class="${text} text-2xl font-bold mb-4">Save Results</h3>
-          <p class="${text} mb-6">Would you like to save your typing test results as an image?</p>
-          <div class="flex justify-end space-x-4">
-            <button id="cancel-save" class="${bg} ${text} px-6 py-2 rounded-full border border-gray-300 hover:bg-opacity-90">Cancel</button>
-            <button id="confirm-save" class="${button} px-6 py-2 rounded-full">Save Image</button>
+        <div class="grid grid-cols-2 gap-6 mb-6">
+          <div>
+            <h2 class="${text} text-lg font-bold mb-1">WPM</h2>
+            <p class="${text} text-4xl font-bold">${wpm}</p>
+          </div>
+          <div>
+            <h2 class="${text} text-lg font-bold mb-1">Accuracy</h2>
+            <p class="${text} text-4xl font-bold">${accuracy}%</p>
+          </div>
+          <div>
+            <h2 class="${text} text-lg font-bold mb-1">Time</h2>
+            <p class="${text} text-4xl font-bold">${
+      ((endTime || 0) - (startTime || 0)) / 1000
+    }s</p>
+          </div>
+          <div>
+            <h2 class="${text} text-lg font-bold mb-1">Characters</h2>
+            <p class="${text} text-4xl font-bold">${snippet.length}</p>
           </div>
         </div>
-      `;
-  
-      document.body.appendChild(modalDiv);
-  
-      const saveImage = () => {
-        const image = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.download = `${userName}-typing-stats.png`;
-        link.href = image;
-        link.click();
-        document.body.removeChild(modalDiv);
-      };
-  
-      modalDiv.querySelector('#confirm-save')?.addEventListener('click', saveImage);
-      modalDiv.querySelector('#cancel-save')?.addEventListener('click', () => {
-        document.body.removeChild(modalDiv);
+        <div id="chart-container" class="h-48 mb-6"></div>
+      </div>
+      <div class="flex justify-end items-center gap-4 mt-auto">
+        <img src="/warp-logo-dark.png" alt="JoinWarp Logo" class="h-6 -mb-[4px]" />
+      </div>
+    </div>
+    `;
+
+    document.body.appendChild(statsDiv);
+
+    const chartContainer = document.createElement("canvas");
+    const ctx = chartContainer.getContext("2d");
+
+    if (ctx) {
+      new ChartJS(ctx, {
+        type: "line",
+        data: chartData,
+        options: {
+          ...chartOptions,
+          animation: false,
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              min: 0,
+              max: Math.max(Math.ceil(Math.max(...wpmHistory) / 10) * 10, 100),
+              ticks: {
+                stepSize: 10,
+              },
+            },
+            x: {
+              beginAtZero: true,
+            },
+          },
+          elements: {
+            line: {
+              tension: 0.1,
+            },
+          },
+        },
       });
-  
-    } catch (error) {
-      console.error('Error generating image:', error);
     }
-    
+
+    statsDiv.querySelector("#chart-container")?.appendChild(chartContainer);
+
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    const canvas = await html2canvas(statsDiv, {
+      backgroundColor: null,
+      scale: 2,
+      logging: false,
+      useCORS: true,
+    });
+
+    const image = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.download = `${userName}-typing-stats.png`;
+    link.href = image;
+    link.click();
+
     document.body.removeChild(statsDiv);
-  };  
+  };
 
   const handleKeyPress = useCallback(
     (e: KeyboardEvent) => {
@@ -519,12 +493,6 @@ if (ctx) {
     setShowNamePrompt(true);
   };
 
-  const handleNameSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setShowNamePrompt(false);
-    await generateShareImage();
-  };
-
   const getThemeClasses = (themeName: string): ThemeClasses => {
     switch (themeName) {
       case "catppuccin":
@@ -565,15 +533,6 @@ if (ctx) {
           incorrect: "text-red-400",
           button: "bg-blue-500 text-white hover:bg-blue-600",
           cursor: "bg-white",
-        };
-      case "light":
-        return {
-          bg: "bg-gray-100",
-          text: "text-gray-900",
-          correct: "text-green-600",
-          incorrect: "text-red-600",
-          button: "bg-blue-500 text-white hover:bg-blue-600",
-          cursor: "bg-gray-900",
         };
       case "nord":
         return {
@@ -634,14 +593,18 @@ if (ctx) {
       {
         label: "WPM",
         data: wpmHistory,
-        borderColor: "rgb(75, 192, 192)",
-        tension: 0.1,
+        borderColor: "rgba(147, 112, 219, 1)",
+        backgroundColor: "rgba(147, 112, 219, 0.2)",
+        fill: true,
+        tension: 0.4,
       },
       {
         label: "Errors",
         data: errorHistory,
-        borderColor: "rgb(255, 99, 132)",
-        tension: 0.1,
+        borderColor: "rgba(169, 169, 169, 1)",
+        backgroundColor: "rgba(169, 169, 169, 0.2)",
+        fill: true,
+        tension: 0.4,
       },
     ],
   };
@@ -652,6 +615,26 @@ if (ctx) {
     scales: {
       y: {
         beginAtZero: true,
+        max: Math.max(Math.ceil(Math.max(...wpmHistory) / 10) * 10, 100),
+        grid: {
+          color: "rgba(255, 255, 255, 0.1)",
+        },
+        ticks: {
+          color: "rgba(255, 255, 255, 0.7)",
+        },
+      },
+      x: {
+        grid: {
+          color: "rgba(255, 255, 255, 0.1)",
+        },
+        ticks: {
+          color: "rgba(255, 255, 255, 0.7)",
+        },
+      },
+    },
+    plugins: {
+      legend: {
+        display: false,
       },
     },
   };
@@ -673,8 +656,8 @@ if (ctx) {
       {!isFinished ? (
         <>
           <div className="mb-8 text-center">
-            <span className={`text-4xl font-bold ${text}`}>{wpm || 0}</span>
-            <span className={`text-xl ml-2 ${text} opacity-70`}>WPM</span>
+            <span className={`text-6xl font-bold ${text}`}>{wpm || 0}</span>
+            <span className={`text-2xl ml-2 ${text} opacity-70`}>wpm</span>
           </div>
           <div
             className={`${bg} p-8 rounded-lg mb-8 relative overflow-hidden ${
@@ -738,16 +721,10 @@ if (ctx) {
             </pre>
           </div>
           {isLoading && (
-  <div className="w-full h-2 bg-opacity-20 rounded">
-    <div className={`h-full ${button} rounded animate-pulse`}></div>
-  </div>
+            <div className="w-full h-2 bg-opacity-20 rounded mb-8">
+              <div className={`h-full ${button} rounded animate-pulse`}></div>
+            </div>
           )}
-          <div className={`flex justify-between mb-4 ${text} opacity-70`}>
-            <span>Errors: {errors}</span>
-            <span>
-              Progress: {Math.round((cursorPosition / snippet.length) * 100)}%
-            </span>
-          </div>
         </>
       ) : (
         <div className={`${bg} p-8 rounded-lg mb-8`}>
@@ -756,6 +733,11 @@ if (ctx) {
               {userName}'s Results
             </h2>
           )}
+          <div className={`flex justify-between mb-4 ${text} opacity-70`}>
+            <span>raw {calculateRawWPM()} wpm</span>
+            <span>{selectedLanguage}</span>
+          </div>
+
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div>
               <h2 className={`${text} text-2xl font-bold mb-2`}>WPM</h2>
